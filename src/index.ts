@@ -8,7 +8,7 @@ logger.info('Launching host');
 // Speed up the mouse.
 robot.setMouseDelay(2);
 
-const room: string = 'remotepc-session3';
+const room: string = 'session';
 
 let client: string;
 
