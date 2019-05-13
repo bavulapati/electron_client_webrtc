@@ -19,7 +19,7 @@ interface ICandidateMsg {
 }
 
 // tslint:disable-next-line: no-http-string
-const socket: SocketIOClient.Socket = io('http://192.168.3.92:8080');
+const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast-1.compute.amazonaws.com:8080');
 /**
  * List of messages to use with Socket
  */
@@ -42,7 +42,7 @@ const socketMessages: SocketMessages = new SocketMessages();
 
 socket.on('connect', () => {
     logger.info('socket connected');
-    socket.emit('create or join', room);
+    socket.emit(socketMessages.createOrJoinRoom, room);
 });
 
 socket.on(socketMessages.created, (roomName: string, clientId: string) => {

@@ -76,6 +76,7 @@ function minimizeHostWindow(): void {
 }
 
 ipcMain.on('show-main-window', () => {
+  logger.info('received show-main-window ipc');
   if (hostWindow !== undefined) {
     hostWindow.show();
   }
