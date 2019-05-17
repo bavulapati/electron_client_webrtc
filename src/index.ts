@@ -1,6 +1,8 @@
 import { ipcRenderer } from 'electron';
+import fs from 'fs';
 import robot from 'robotjs';
 import io from 'socket.io-client';
+import { socketMessages } from './constants/socketMessages';
 import { logger } from './logger';
 
 logger.info('Launching host');
@@ -8,7 +10,7 @@ logger.info('Launching host');
 // Speed up the mouse.
 robot.setMouseDelay(2);
 
-const room: string = 'session';
+let room: string;
 
 let client: string;
 
@@ -20,29 +22,18 @@ interface ICandidateMsg {
 
 // tslint:disable-next-line: no-http-string
 const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast-1.compute.amazonaws.com:8080');
-/**
- * List of messages to use with Socket
- */
-class SocketMessages {
-    public readonly message: string = 'message';
-    public readonly iceCandidate: string = 'ice-candidate';
-    public readonly offer: string = 'offer';
-    public readonly answer: string = 'answer';
-    public readonly startCall: string = 'start-call';
-    public readonly hangUp: string = 'hang-up';
-    public readonly createOrJoinRoom: string = 'create or join';
-    public readonly created: string = 'created';
-    public readonly joined: string = 'joined';
-    public readonly join: string = 'join';
-    public readonly ready: string = 'ready';
-    public readonly full: string = 'full';
-}
-
-const socketMessages: SocketMessages = new SocketMessages();
 
 socket.on('connect', () => {
     logger.info('socket connected');
-    socket.emit(socketMessages.createOrJoinRoom, room);
+    fs.readFile('/usr/local/serial.txt', (err: NodeJS.ErrnoException | null, data: Buffer): void => {
+        if (err !== null) {
+            logger.error(err);
+        } else {
+            room = data.toString()
+                .trim();
+            socket.emit(socketMessages.createOrJoinRoom, room);
+        }
+    });
 });
 
 socket.on(socketMessages.created, (roomName: string, clientId: string) => {
