@@ -42,7 +42,7 @@ function createHostWindow(): void {
     minHeight: 580,
     minWidth: 820,
     resizable: true,
-    show: false,
+    show: true,
     // useContentSize: true,
     width: 820
   });

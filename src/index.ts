@@ -20,28 +20,53 @@ interface ICandidateMsg {
     candidate: string;
 }
 
+interface IBmrUtilityResponse {
+    user_name: string;
+    bmr_serial_key: string;
+    access_token: string;
+    remote_disabled: number;
+}
+const bmrUtilityResponse: IBmrUtilityResponse = {
+    user_name: 'vinaybmr@myworld.com',
+    bmr_serial_key: 'BMR-SERIAL-KEY3',
+    access_token: 'lifetime_host_access_token',
+    remote_disabled: 0
+};
+
 interface IConnectionQuery {
     accessToken: string;
+    userName: string;
 }
 
 const connectionQuery: IConnectionQuery = {
-    accessToken: 'ddddvalid' // valid if 'valid'
+    accessToken: bmrUtilityResponse.access_token,
+    userName: bmrUtilityResponse.user_name
 };
 
 // tslint:disable-next-line: no-http-string
-const socket: SocketIOClient.Socket = io('http://localhost:8080', { query: connectionQuery });
+const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast-1.compute.amazonaws.com:8080', { query: connectionQuery });
 
 socket.on('connect', () => {
     logger.info('socket connected');
-    fs.readFile('/usr/local/serial.txt', (err: NodeJS.ErrnoException | null, data: Buffer): void => {
-        if (err !== null) {
-            logger.error(err);
-        } else {
-            room = data.toString()
-                .trim();
-            socket.emit(socketMessages.createOrJoinRoom, room);
-        }
-    });
+    socket.emit(socketMessages.register, bmrUtilityResponse);
+    room = bmrUtilityResponse.bmr_serial_key;
+    // fs.readFile('/usr/local/serial.txt', (err: NodeJS.ErrnoException | null, data: Buffer): void => {
+    //     if (err !== null) {
+    //         logger.error(err);
+    //     } else {
+    //         room = data.toString()
+    //             .trim();
+    //         socket.emit(socketMessages.createOrJoinRoom, room);
+    //     }
+    // });
+});
+
+socket.on(socketMessages.registerResponse, (err?: Error) => {
+    if (err === undefined) {
+        logger.error(err);
+    } else {
+        logger.info('socket registered');
+    }
 });
 
 socket.on('disconnect', () => {

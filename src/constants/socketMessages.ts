@@ -15,6 +15,8 @@ class SocketMessages {
     public readonly join: string = 'join';
     public readonly ready: string = 'ready';
     public readonly full: string = 'full';
+    public readonly register: string = 'register';
+    public readonly registerResponse: string = 'register response';
 }
 
 export const socketMessages: SocketMessages = new SocketMessages();
