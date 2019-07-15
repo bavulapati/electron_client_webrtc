@@ -48,17 +48,17 @@ const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast
 
 socket.on('connect', () => {
     logger.info('socket connected');
-    socket.emit(socketMessages.register, bmrUtilityResponse);
-    room = bmrUtilityResponse.bmr_serial_key;
-    // fs.readFile('/usr/local/serial.txt', (err: NodeJS.ErrnoException | null, data: Buffer): void => {
-    //     if (err !== null) {
-    //         logger.error(err);
-    //     } else {
-    //         room = data.toString()
-    //             .trim();
-    //         socket.emit(socketMessages.createOrJoinRoom, room);
-    //     }
-    // });
+    // socket.emit(socketMessages.register, bmrUtilityResponse);
+    // room = bmrUtilityResponse.bmr_serial_key;
+    fs.readFile('/usr/local/serial.txt', (err: NodeJS.ErrnoException | null, data: Buffer): void => {
+        if (err !== null) {
+            logger.error(err);
+        } else {
+            room = data.toString()
+                .trim();
+            socket.emit(socketMessages.createOrJoinRoom, room);
+        }
+    });
 });
 
 socket.on(socketMessages.registerResponse, (err?: Error) => {
