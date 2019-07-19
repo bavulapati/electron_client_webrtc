@@ -45,11 +45,11 @@
   "devDependencies": {
     "@types/debug": "^4.1.4",
     "@types/socket.io-client": "^1.4.32",
-    "electron": "^4.2.5",
+    "electron": "^4.2.7",
     "electron-builder": "^20.44.4",
     "tslint": "^5.18.0",
     "tslint-microsoft-contrib": "^6.2.0",
-    "typescript": "^3.5.2"
+    "typescript": "^3.5.3"
   },
   "dependencies": {
     "electron-log": "^3.0.6",

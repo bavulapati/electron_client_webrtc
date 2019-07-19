@@ -1,8 +1,21 @@
 // Copyright © 2018 IDrive Inc, all rights reserved.
 
 import { app, BrowserWindow, ipcMain } from 'electron';
+import fs from 'fs';
+import os from 'os';
 import path from 'path';
 import { logger } from './logger';
+
+const pidPath: string = path.join(os.homedir(), 'remotepc.pid');
+logger.info(`pidPath: ${pidPath}`);
+// tslint:disable-next-line: non-literal-fs-path
+fs.writeFile(pidPath, process.pid, (err: NodeJS.ErrnoException | null): void => {
+  if (err !== null) {
+    logger.error('failed to write process id');
+  } else {
+    logger.info(`written the remotepc process id to ${pidPath}`);
+  }
+});
 
 let hostWindow: Electron.BrowserWindow;
 // Make this app a single instance app.
