@@ -12,11 +12,11 @@
   ],
   "main": "release/main.js",
   "scripts": {
-    "test": "npm run build && electron .",
-    "start": "npm install && npm audit fix && npm test",
+    "test": "npm audit fix && npm run lint && npm run transpile && electron .",
+    "start": "npm install && npm run transpile && elctron .",
     "lint": "tslint --project tsconfig.json --config tslint.json --fix",
     "tslint": "tslint --config tslint.json --fix",
-    "build": "tsc --build tsconfig.json",
+    "transpile": "tsc --build tsconfig.json",
     "pack": "npm install && npm audit fix && npm run build && node ./release/package-app.js",
     "postinstall": "electron-builder install-app-deps"
   },
@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.4",
     "@types/socket.io-client": "^1.4.32",
-    "electron": "^4.2.7",
+    "electron": "^4.2.8",
     "electron-builder": "^20.44.4",
     "tslint": "^5.18.0",
     "tslint-microsoft-contrib": "^6.2.0",
