@@ -17,7 +17,7 @@
     "lint": "tslint --project tsconfig.json --config tslint.json --fix",
     "tslint": "tslint --config tslint.json --fix",
     "transpile": "tsc --build tsconfig.json",
-    "pack": "npm install && npm audit fix && npm run build && node ./release/package-app.js",
+    "pack": "npm install && npm audit fix && npm run transpile && node ./release/package-app.js",
     "postinstall": "electron-builder install-app-deps"
   },
   "husky": {
