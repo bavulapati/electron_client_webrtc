@@ -41,7 +41,8 @@ socket.on('disconnect', () => {
 
 function getRoomName(): string {
     const room: string = fs.readFileSync('/usr/local/serial.txt')
-        .toString();
+        .toString()
+        .trim();
     logger.info(`room name ${room}`);
 
     return room;
