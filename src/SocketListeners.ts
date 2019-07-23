@@ -26,7 +26,6 @@ export class SocketListeners {
         logger.info('adding all socket listeners');
         // socket.emit(socketMessages.register, bmrUtilityResponse);
         // room = bmrUtilityResponse.bmr_serial_key;
-        this.socket.emit(socketMessages.createOrJoinRoom, this.room);
 
         this.socket.on(socketMessages.registerResponse, (err?: Error) => {
             if (err === undefined) {
@@ -43,7 +42,7 @@ export class SocketListeners {
 
         this.socket.on(socketMessages.created, (roomName: string) => {
             logger.info(`Created a room as ${roomName} and joined`);
-            ipcRenderer.send('show-main-window');
+            // ipcRenderer.send('show-main-window');
         });
 
         this.socket.on(socketMessages.full, (roomName: string) => {
@@ -52,7 +51,7 @@ export class SocketListeners {
 
         this.socket.on(socketMessages.joined, (roomName: string) => {
             logger.info(`Joined room ${roomName}`);
-            ipcRenderer.send('show-main-window');
+            // ipcRenderer.send('show-main-window');
         });
 
         this.socket.on(socketMessages.startCall, () => {
@@ -74,5 +73,6 @@ export class SocketListeners {
             logger.info('host received hang up.');
             this.webrtc.hangupAction();
         });
+
     }
 }

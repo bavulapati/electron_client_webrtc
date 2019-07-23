@@ -1,6 +1,7 @@
 import fs from 'fs';
 import robot from 'robotjs';
 import io from 'socket.io-client';
+import { socketMessages } from './constants/socketMessages';
 import { IBmrUtilityResponse, IConnectionQuery } from './interfaces';
 import { logger } from './logger';
 import { SocketListeners } from './SocketListeners';
@@ -23,12 +24,15 @@ const connectionQuery: IConnectionQuery = {
 };
 
 // tslint:disable-next-line: no-http-string
-const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast-1.compute.amazonaws.com:8080', { query: connectionQuery });
+const socket: SocketIOClient.Socket = io('http://localhost:8080', { query: connectionQuery });
 
 socket.on('connect', async () => {
     logger.info('socket connected');
     const room: string = getRoomName();
-    await new SocketListeners(socket, room).addAll();
+    if (socket.hasListeners(socketMessages.createOrJoinRoom) === false) {
+        await new SocketListeners(socket, room).addAll();
+    }
+    socket.emit(socketMessages.createOrJoinRoom, room);
 });
 
 socket.on('disconnect', () => {
@@ -36,6 +40,9 @@ socket.on('disconnect', () => {
 });
 
 function getRoomName(): string {
-    return fs.readFileSync('/usr/local/serial.txt')
+    const room: string = fs.readFileSync('/usr/local/serial.txt')
         .toString();
+    logger.info(`room name ${room}`);
+
+    return room;
 }
