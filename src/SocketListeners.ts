@@ -41,8 +41,8 @@ export class SocketListeners {
             // socket.close();
         });
 
-        this.socket.on(socketMessages.created, (roomName: string, clientId: string) => {
-            logger.info(`Created a room as ${roomName} and joined as ${clientId}`);
+        this.socket.on(socketMessages.created, (roomName: string) => {
+            logger.info(`Created a room as ${roomName} and joined`);
             ipcRenderer.send('show-main-window');
         });
 
@@ -50,8 +50,8 @@ export class SocketListeners {
             logger.info(`Message from client: Room ${roomName} is full :^(`);
         });
 
-        this.socket.on(socketMessages.joined, (roomName: string, clientId: string) => {
-            logger.info(`Joined room ${roomName} as ${clientId}`);
+        this.socket.on(socketMessages.joined, (roomName: string) => {
+            logger.info(`Joined room ${roomName}`);
             ipcRenderer.send('show-main-window');
         });
 
