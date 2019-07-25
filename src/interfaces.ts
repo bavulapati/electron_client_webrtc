@@ -26,3 +26,17 @@ export interface IEventData extends IMouseCoordinates {
     button: number;
     keyCode: string;
 }
+
+export enum ServerStatus {
+    online,
+    offline,
+    insession,
+    disabled
+}
+
+export interface IBmrServer {
+    id: number;
+    name: string;
+    serialKey: string;
+    status: ServerStatus;
+}

@@ -7,9 +7,7 @@ import { logger } from './logger';
  * Class that handles the Real-Time Communications using WebRTC
  */
 export class WebRTC {
-    private readonly socket: SocketIOClient.Socket;
-    private readonly room: string;
-
+    private static webrtcInstance: WebRTC;
     private sendChannel: RTCDataChannel | undefined;
     private localPeerConnection: RTCPeerConnection | undefined;
     private localStream: MediaStream | undefined;
@@ -29,16 +27,23 @@ export class WebRTC {
         offerToReceiveVideo: true
     };
 
-    constructor(socket: SocketIOClient.Socket, room: string) {
-        this.socket = socket;
-        this.room = room;
+    private constructor() {
+        logger.info('creating webrtc instance');
+    }
+
+    public static GET_INSTANCE(): WebRTC {
+        if (this.webrtcInstance === undefined) {
+            this.webrtcInstance = new WebRTC();
+        }
+
+        return this.webrtcInstance;
     }
 
     // Handles start button action: creates local MediaStream.
-    public startAction(): void {
+    public startAction(room: string, socket: SocketIOClient.Socket): void {
         // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
         (<any>navigator.mediaDevices).getUserMedia(this.mediaStreamConstraints)
-            .then(this.gotLocalMediaStream)
+            .then((mediaStream: MediaStream) => { this.gotLocalMediaStream(mediaStream, room, socket); })
             .catch(this.handleLocalMediaStreamError);
         logger.info('Requesting local stream.');
     }
@@ -92,10 +97,10 @@ export class WebRTC {
     }
 
     // Sets the MediaStream as the video element src.
-    private gotLocalMediaStream(mediaStream: MediaStream): void {
+    private gotLocalMediaStream(mediaStream: MediaStream, room: string, socket: SocketIOClient.Socket): void {
         this.localStream = mediaStream;
         logger.info('Received local stream.');
-        this.answerCall();
+        this.answerCall(room, socket);
     }
 
     // Logs that the connection failed.
@@ -146,7 +151,7 @@ export class WebRTC {
     }
 
     // Logs offer creation and sets peer connection session descriptions.
-    private createdOffer(description: RTCSessionDescriptionInit): void {
+    private createdOffer(description: RTCSessionDescriptionInit, room: string, socket: SocketIOClient.Socket): void {
         logger.info(`Offer from localPeerConnection:\n${description.sdp}`);
 
         logger.info('localPeerConnection setLocalDescription start.');
@@ -158,12 +163,12 @@ export class WebRTC {
                 .catch(this.setSessionDescriptionError);
         }
 
-        this.socket.emit(socketMessages.offer, description, this.room);
+        socket.emit(socketMessages.offer, description, room);
 
     }
 
     // Handles call button action: creates peer connection.
-    private answerCall(): void {
+    private answerCall(room: string, socket: SocketIOClient.Socket): void {
 
         logger.info('Answering call.');
 
@@ -195,8 +200,12 @@ export class WebRTC {
 
             this.creaeDataChannel();
 
-            this.localPeerConnection.addEventListener('icecandidate', this.handleConnection);
-            this.localPeerConnection.addEventListener('iceconnectionstatechange', this.handleConnectionChange);
+            this.localPeerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
+                this.handleConnection(event, room, socket);
+            });
+            this.localPeerConnection.addEventListener('iceconnectionstatechange', (event: Event) => {
+                this.handleConnectionChange(event);
+            });
 
             // Add local stream to connection and create offer to connect.
 
@@ -211,7 +220,7 @@ export class WebRTC {
 
             logger.info('localPeerConnection createOffer start.');
             this.localPeerConnection.createOffer(this.offerOptions)
-                .then(this.createdOffer)
+                .then((description: RTCSessionDescriptionInit) => { this.createdOffer(description, room, socket); })
                 .catch(this.setSessionDescriptionError);
         }
     }
@@ -219,7 +228,7 @@ export class WebRTC {
     // Define RTC peer connection behavior.
 
     // Connects with new peer candidate.
-    private handleConnection(event: RTCPeerConnectionIceEvent): void {
+    private handleConnection(event: RTCPeerConnectionIceEvent, room: string, socket: SocketIOClient.Socket): void {
         const peerConnection: RTCPeerConnection | null = <RTCPeerConnection>event.target;
         const iceCandidate: RTCIceCandidate | null = event.candidate;
 
@@ -230,7 +239,7 @@ export class WebRTC {
                 label: iceCandidate.sdpMLineIndex
             };
 
-            this.socket.emit(socketMessages.iceCandidate, candidateMsg, this.room);
+            socket.emit(socketMessages.iceCandidate, candidateMsg, room);
 
             logger.info(`${this.getPeerName(peerConnection)} ICE candidate:\n${iceCandidate.candidate}.`);
         }

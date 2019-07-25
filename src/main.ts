@@ -17,6 +17,12 @@ fs.writeFile(pidPath, process.pid, (err: NodeJS.ErrnoException | null): void => 
   }
 });
 
+process.on('SIGTERM', async () => {
+  logger.info('SIGTERM signal received.');
+  fs.truncateSync(pidPath);
+  process.exit(0);
+});
+
 let hostWindow: Electron.BrowserWindow;
 // Make this app a single instance app.
 //

@@ -24,20 +24,10 @@ const connectionQuery: IConnectionQuery = {
 };
 
 // tslint:disable-next-line: no-http-string
-const socket: SocketIOClient.Socket = io('http://localhost:8080', { query: connectionQuery });
+const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast-1.compute.amazonaws.com:8080', { query: connectionQuery });
 
-socket.on('connect', async () => {
-    logger.info('socket connected');
-    const room: string = getRoomName();
-    if (socket.hasListeners(socketMessages.createOrJoinRoom) === false) {
-        await new SocketListeners(socket, room).addAll();
-    }
-    socket.emit(socketMessages.createOrJoinRoom, room);
-});
-
-socket.on('disconnect', () => {
-    logger.info('socket disconnected.');
-});
+SocketListeners.GET_INSTANCE()
+    .addAll(socket, getRoomName());
 
 function getRoomName(): string {
     const room: string = fs.readFileSync('/usr/local/serial.txt')
