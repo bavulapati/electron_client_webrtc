@@ -17,7 +17,7 @@ fs.writeFile(pidPath, process.pid, (err: NodeJS.ErrnoException | null): void => 
   }
 });
 
-process.on('SIGTERM', async () => {
+process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received.');
   fs.truncateSync(pidPath);
   process.exit(0);
@@ -123,6 +123,11 @@ app.on('activate', () => {
     logger.debug('There is no main window');
     createHostWindow();
   }
+});
+
+app.on('before-quit', () => {
+  logger.info('quitting the app');
+  fs.truncateSync(pidPath);
 });
 
 // In this file you can include the rest of your app"s specific main process

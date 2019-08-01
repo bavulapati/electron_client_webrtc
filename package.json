@@ -13,7 +13,7 @@
   "main": "release/main.js",
   "scripts": {
     "test": "npm audit fix && npm run lint && npm run transpile && electron .",
-    "start": "npm install && npm run transpile && elctron .",
+    "start": "npm install && npm run transpile && electron .",
     "lint": "tslint --project tsconfig.json --config tslint.json --fix",
     "tslint": "tslint --config tslint.json --fix",
     "transpile": "tsc --build tsconfig.json",

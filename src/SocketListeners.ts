@@ -1,4 +1,3 @@
-import { ipcRenderer } from 'electron';
 import { socketMessages } from './constants/socketMessages';
 import { IBmrServer, IIceCandidateMsg } from './interfaces';
 import { logger } from './logger';
