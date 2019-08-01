@@ -50,20 +50,22 @@ export class WebRTC {
 
     public receivedRemoteIceCandidate(rTCIceCandidateInit: IIceCandidateMsg): void {
 
-        const newIceCandidate: RTCIceCandidate = new RTCIceCandidate({
-            candidate: rTCIceCandidateInit.candidate,
-            sdpMLineIndex: rTCIceCandidateInit.label,
-            sdpMid: rTCIceCandidateInit.id
-        });
+        if (rTCIceCandidateInit.candidate.trim().length !== 0) {
+            const newIceCandidate: RTCIceCandidate = new RTCIceCandidate({
+                candidate: rTCIceCandidateInit.candidate,
+                sdpMLineIndex: rTCIceCandidateInit.label,
+                sdpMid: rTCIceCandidateInit.id
+            });
 
-        if (this.localPeerConnection !== undefined) {
-            this.localPeerConnection.addIceCandidate(newIceCandidate)
-                .then(() => {
-                    this.handleConnectionSuccess();
-                })
-                .catch((error: Error) => {
-                    this.handleConnectionFailure(error);
-                });
+            if (this.localPeerConnection !== undefined) {
+                this.localPeerConnection.addIceCandidate(newIceCandidate)
+                    .then(() => {
+                        this.handleConnectionSuccess();
+                    })
+                    .catch((error: Error) => {
+                        this.handleConnectionFailure(error);
+                    });
+            }
         }
         logger.info(`ICE candidate:\n${rTCIceCandidateInit.candidate}.`);
     }

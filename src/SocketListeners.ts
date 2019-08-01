@@ -73,7 +73,7 @@ export class SocketListeners {
         });
 
         socket.on(socketMessages.iceCandidate, (iceCandidate: IIceCandidateMsg) => {
-            logger.info(`received ${socketMessages.iceCandidate} as : ${iceCandidate}`);
+            logger.info(`received ${socketMessages.iceCandidate} as : ${JSON.stringify(iceCandidate)}`);
             this.webrtc.receivedRemoteIceCandidate(iceCandidate);
         });
 
