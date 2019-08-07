@@ -23,7 +23,7 @@ export class SocketListeners {
     }
 
     /**
-     * onSocketConnect
+     * Add all listeners
      */
     public addAll(socket: SocketIOClient.Socket, room: string): void {
 

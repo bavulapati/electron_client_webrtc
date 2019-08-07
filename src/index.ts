@@ -1,7 +1,7 @@
 import fs from 'fs';
 import robot from 'robotjs';
 import io from 'socket.io-client';
-import { socketMessages } from './constants/socketMessages';
+import { serialKeyFile, singalingServer } from './constants/strings';
 import { IBmrUtilityResponse, IConnectionQuery } from './interfaces';
 import { logger } from './logger';
 import { SocketListeners } from './SocketListeners';
@@ -23,14 +23,13 @@ const connectionQuery: IConnectionQuery = {
     userName: bmrUtilityResponse.user_name
 };
 
-// tslint:disable-next-line: no-http-string
-const socket: SocketIOClient.Socket = io('http://ec2-52-221-240-156.ap-southeast-1.compute.amazonaws.com:8080', { query: connectionQuery });
+const socket: SocketIOClient.Socket = io(singalingServer, { query: connectionQuery });
 
 SocketListeners.GET_INSTANCE()
     .addAll(socket, getRoomName());
 
 function getRoomName(): string {
-    const room: string = fs.readFileSync('/usr/local/serial.txt')
+    const room: string = fs.readFileSync(serialKeyFile)
         .toString()
         .trim();
     logger.info(`room name ${room}`);
