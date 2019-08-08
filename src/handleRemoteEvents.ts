@@ -2,6 +2,9 @@ import robot from 'robotjs';
 import { IEventData } from './interfaces';
 import { logger } from './logger';
 
+// Speed up the mouse.
+robot.setMouseDelay(2);
+
 export function handleRemoteEvents(eventData: IEventData): void {
     let button: string = 'left';
     switch (eventData.button) {

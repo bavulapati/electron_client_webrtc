@@ -1,15 +1,12 @@
 import fs from 'fs';
-import robot from 'robotjs';
 import io from 'socket.io-client';
+import { lsExample } from './bmrUtilities';
 import { serialKeyFile, singalingServer } from './constants/strings';
 import { IBmrUtilityResponse, IConnectionQuery } from './interfaces';
 import { logger } from './logger';
 import { SocketListeners } from './SocketListeners';
 
 logger.info('Launching host');
-
-// Speed up the mouse.
-robot.setMouseDelay(2);
 
 const bmrUtilityResponse: IBmrUtilityResponse = {
     user_name: 'vinaybmr@myworld.com',
@@ -22,6 +19,10 @@ const connectionQuery: IConnectionQuery = {
     accessToken: bmrUtilityResponse.access_token,
     userName: bmrUtilityResponse.user_name
 };
+
+// lsExample()
+//     .then()
+//     .catch();
 
 const socket: SocketIOClient.Socket = io(singalingServer, { query: connectionQuery });
 
