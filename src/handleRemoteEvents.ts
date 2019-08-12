@@ -5,6 +5,35 @@ import { logger } from './logger';
 // Speed up the mouse.
 robot.setMouseDelay(2);
 
+const blockedKeyCode: string[] = [
+    'AltLeft',
+    'AltRight',
+    'MetaLeft',
+    'MetaRight',
+    'Escape',
+    'F1',
+    'F2',
+    'F3',
+    'F4',
+    'F5',
+    'F6',
+    'F7',
+    'F8',
+    'F9',
+    'F10',
+    'F11',
+    'F12',
+    'ControlLeft',
+    'ControlRight',
+    'PrintScreen',
+    'Backspace',
+    'Insert',
+    'Home',
+    'Delete',
+    'End',
+    ''
+];
+
 export function handleRemoteEvents(eventData: IEventData): void {
     let button: string = 'left';
     switch (eventData.button) {
@@ -32,10 +61,14 @@ export function handleRemoteEvents(eventData: IEventData): void {
             break;
         case 'keydown':
             logger.info('Got Data Channel Message:', eventData);
-            robot.keyToggle(eventData.keyCode, 'down');
+            if (blockedKeyCode.includes(eventData.keyCode.trim()) === false) {
+                robot.keyToggle(eventData.keyCode.trim(), 'down');
+            }
             break;
         case 'keyup':
-            robot.keyToggle(eventData.keyCode, 'up');
+            if (blockedKeyCode.includes(eventData.keyCode.trim()) === false) {
+                robot.keyToggle(eventData.keyCode.trim(), 'up');
+            }
             break;
         default:
             logger.info('unhandled eventdata ', event);

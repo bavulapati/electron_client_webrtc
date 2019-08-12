@@ -1,7 +1,6 @@
-import fs from 'fs';
 import io from 'socket.io-client';
-import { lsExample } from './bmrUtilities';
-import { serialKeyFile, singalingServer } from './constants/strings';
+import { BmrUtilities } from './bmrUtilities';
+import { singalingServer } from './constants/strings';
 import { IBmrUtilityResponse, IConnectionQuery } from './interfaces';
 import { logger } from './logger';
 import { SocketListeners } from './SocketListeners';
@@ -10,7 +9,8 @@ logger.info('Launching host');
 
 const bmrUtilityResponse: IBmrUtilityResponse = {
     user_name: 'vinaybmr@myworld.com',
-    bmr_serial_key: 'BMR-SERIAL-KEY30',
+    bmr_serial_key: BmrUtilities.GET_INSTANCE()
+        .getRoomName(),
     access_token: 'lifetime_host_access_token',
     remote_disabled: 0
 };
@@ -27,13 +27,4 @@ const connectionQuery: IConnectionQuery = {
 const socket: SocketIOClient.Socket = io(singalingServer, { query: connectionQuery });
 
 SocketListeners.GET_INSTANCE()
-    .addAll(socket, getRoomName());
-
-function getRoomName(): string {
-    const room: string = fs.readFileSync(serialKeyFile)
-        .toString()
-        .trim();
-    logger.info(`room name ${room}`);
-
-    return room;
-}
+    .addAll(socket, bmrUtilityResponse.bmr_serial_key);

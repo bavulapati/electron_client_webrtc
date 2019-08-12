@@ -5,7 +5,7 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "build",
+            "script": "transpile",
             "label": "build-for-debug",
             "group": {
                 "kind": "build",
