@@ -72,10 +72,10 @@ function createHostWindow(): void {
   // Open the DevTools.
   hostWindow.webContents.openDevTools();
 
-  hostWindow.on('close', (event: Electron.Event) => {
-    event.preventDefault();
-    minimizeHostWindow();
-  });
+  // hostWindow.on('close', (event: Electron.Event) => {
+  //   event.preventDefault();
+  //   minimizeHostWindow();
+  // });
 
   // Emitted when the window is closed.
   hostWindow.on('closed', () => {
@@ -87,12 +87,12 @@ function createHostWindow(): void {
   });
 }
 
-function minimizeHostWindow(): void {
-  if (hostWindow !== undefined) {
-    logger.debug('minimizing the host Window');
-    hostWindow.minimize();
-  }
-}
+// function minimizeHostWindow(): void {
+//   if (hostWindow !== undefined) {
+//     logger.debug('minimizing the host Window');
+//     hostWindow.minimize();
+//   }
+// }
 
 ipcMain.on('show-main-window', () => {
   logger.info('received show-main-window ipc');
