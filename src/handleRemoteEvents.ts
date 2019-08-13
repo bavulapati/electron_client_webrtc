@@ -60,14 +60,19 @@ export function handleRemoteEvents(eventData: IEventData): void {
             robot.mouseToggle('up', button);
             break;
         case 'keydown':
-            logger.info('Got Data Channel Message:', eventData);
+            logger.info('Got Data Channel Message:', eventData.keyCode);
             if (blockedKeyCode.includes(eventData.keyCode.trim()) === false) {
                 robot.keyToggle(eventData.keyCode.trim(), 'down');
+            } else {
+                logger.info('Got a message which is not allowed');
             }
             break;
         case 'keyup':
+            logger.info('Got Data Channel Message:', eventData.keyCode);
             if (blockedKeyCode.includes(eventData.keyCode.trim()) === false) {
                 robot.keyToggle(eventData.keyCode.trim(), 'up');
+            } else {
+                logger.info('Got a message which is not allowed');
             }
             break;
         default:
