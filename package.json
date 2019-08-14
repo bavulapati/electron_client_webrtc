@@ -1,5 +1,5 @@
 {
-  "name": "electron_client_webrtc",
+  "name": "bmr-remotehost",
   "version": "0.0.1",
   "description": "Electron application whose screen can shared",
   "homepage": "https://github.com/bavulapati/electron_client_webrtc#electron_client_webrtc",

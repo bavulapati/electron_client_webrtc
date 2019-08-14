@@ -1,7 +1,7 @@
 import { build, CliOptions, Configuration } from 'electron-builder';
 
 const config: Configuration = {
-    appId: 'com.gitlab.bavulapati.electron_client_webrtc',
+    appId: 'com.gitlab.bavulapati.bmr_remotehost',
     linux: {
         category: 'Network'
     },
