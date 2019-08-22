@@ -4,13 +4,6 @@ export interface IIceCandidateMsg {
     candidate: string;
 }
 
-export interface IBmrUtilityResponse {
-    user_name: string;
-    bmr_serial_key: string;
-    access_token: string;
-    remote_disabled: number;
-}
-
 export interface IGetTokenResponse {
     status: GetTokenResponseStatus;
     data: IGetTokenResponseData;

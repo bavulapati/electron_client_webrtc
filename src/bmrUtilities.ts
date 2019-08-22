@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import fs from 'fs';
 import util from 'util';
-import { serialKeyFile } from './constants/strings';
+import { getTokenCommand, serialKeyFile } from './constants/strings';
 import { GetTokenResponseStatus, IGetTokenResponse, IGetTokenResponseData } from './interfaces';
 import { logger } from './logger';
 /**
@@ -35,7 +35,7 @@ export class BmrUtilities {
                 // reject(`Testing remote quit`);
                 try {
                     const getTokenResponse: IGetTokenResponse
-                        = <IGetTokenResponse>JSON.parse(await this.execPromisified('/usr/local/bmr-remotehost/cloud_manage --get-token'));
+                        = <IGetTokenResponse>JSON.parse(await this.execPromisified(getTokenCommand));
                     if (getTokenResponse.status === GetTokenResponseStatus.failure) {
                         reject('cloud_manage returned with failure status');
                     } else {
@@ -76,15 +76,4 @@ export class BmrUtilities {
             });
     }
 
-}
-
-export async function lsExample(): Promise<void> {
-    const execP: (command: string) => Promise<{
-        stdout: string;
-        stderr: string;
-    }> = util.promisify(exec);
-
-    const { stdout, stderr } = await execP('ls');
-    console.log('stdout:', stdout);
-    console.log('stderr:', stderr);
 }
