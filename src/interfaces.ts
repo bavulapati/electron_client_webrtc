@@ -11,6 +11,21 @@ export interface IBmrUtilityResponse {
     remote_disabled: number;
 }
 
+export interface IGetTokenResponse {
+    status: GetTokenResponseStatus;
+    data: IGetTokenResponseData;
+}
+
+export interface IGetTokenResponseData {
+    username: string;
+    access_token: string;
+}
+
+export enum GetTokenResponseStatus {
+    success = 'success',
+    failure = 'failure'
+}
+
 export interface IConnectionQuery {
     accessToken: string;
     userName: string;
