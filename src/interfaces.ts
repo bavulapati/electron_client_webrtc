@@ -22,6 +22,8 @@ export enum GetTokenResponseStatus {
 export interface IConnectionQuery {
     accessToken: string;
     userName: string;
+    isHost: boolean;
+    serialKey: string;
 }
 
 export interface IMouseCoordinates {

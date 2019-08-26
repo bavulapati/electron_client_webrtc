@@ -22,12 +22,14 @@ function connectToServer(userDetails: IGetTokenResponseData): void {
 
     const connectionQuery: IConnectionQuery = {
         accessToken: userDetails.access_token,
-        userName: userDetails.username
+        userName: userDetails.username,
+        isHost: true,
+        serialKey: BmrUtilities.GET_INSTANCE()
+        .getRoomName()
     };
     logger.info(`accessToken: ${connectionQuery.accessToken} and userName: ${connectionQuery.userName}`);
     const socket: SocketIOClient.Socket = io(singalingServer, { query: connectionQuery });
 
     SocketListeners.GET_INSTANCE()
-        .addAll(socket, BmrUtilities.GET_INSTANCE()
-            .getRoomName());
+        .addAll(socket, connectionQuery.serialKey);
 }
