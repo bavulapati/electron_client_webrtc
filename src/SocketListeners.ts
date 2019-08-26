@@ -28,7 +28,8 @@ export class SocketListeners {
     public addAll(socket: SocketIOClient.Socket, room: string): void {
 
         logger.info('adding all socket listeners');
-        // socket.emit(socketMessages.register, bmrUtilityResponse);
+        // const connectionQuery: IConnectionQuery = <IConnectionQuery>(socket.io.opts.query);
+        socket.emit(socketMessages.register, room);
         // room = bmrUtilityResponse.bmr_serial_key;
 
         socket.on('connect', () => {

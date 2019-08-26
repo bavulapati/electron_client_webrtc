@@ -8,8 +8,8 @@ const config: Configuration = {
     files: [
         '**/*',
         // tslint:disable-next-line: no-invalid-template-strings
-        '!src${/*}',
-        '!release/**/*.map',
+        // '!src${/*}',
+        // '!release/**/*.map',
         '!tsconfig.json',
         '!tslint.json',
         '!*.md'
