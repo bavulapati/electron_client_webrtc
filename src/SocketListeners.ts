@@ -73,12 +73,12 @@ export class SocketListeners {
             this.webrtc.startAction(room, socket);
         });
 
-        socket.on(socketMessages.iceCandidate, (iceCandidate: IIceCandidateMsg) => {
+        socket.on(socketMessages.iceCandidate, (roomName: string, iceCandidate: IIceCandidateMsg) => {
             logger.info(`received ${socketMessages.iceCandidate} as : ${JSON.stringify(iceCandidate)}`);
             this.webrtc.receivedRemoteIceCandidate(iceCandidate);
         });
 
-        socket.on(socketMessages.answer, (description: RTCSessionDescriptionInit) => {
+        socket.on(socketMessages.answer, (roomName: string, description: RTCSessionDescriptionInit) => {
             logger.info(`received ${socketMessages.answer} as : ${description}`);
             this.webrtc.receivedRemoteAnswer(description);
         });
