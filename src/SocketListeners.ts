@@ -78,7 +78,7 @@ export class SocketListeners {
             this.webrtc.receivedRemoteIceCandidate(iceCandidate);
         });
 
-        socket.on(socketMessages.answer, (roomName: string, description: RTCSessionDescriptionInit) => {
+        socket.on(socketMessages.answer, (description: RTCSessionDescriptionInit) => {
             logger.info(`received ${socketMessages.answer} as : ${description}`);
             this.webrtc.receivedRemoteAnswer(description);
         });
