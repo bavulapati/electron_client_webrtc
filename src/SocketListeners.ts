@@ -68,22 +68,22 @@ export class SocketListeners {
             // ipcRenderer.send('show-main-window');
         });
 
-        socket.on(socketMessages.startCall, () => {
+        socket.on(socketMessages.startCall, (roomName: string) => {
             logger.info('viewer wants to connect');
             this.webrtc.startAction(room, socket);
         });
 
-        socket.on(socketMessages.iceCandidate, (iceCandidate: IIceCandidateMsg) => {
+        socket.on(socketMessages.iceCandidate, (iceCandidate: IIceCandidateMsg, roomName: string) => {
             logger.info(`received ${socketMessages.iceCandidate} as : ${JSON.stringify(iceCandidate)}`);
             this.webrtc.receivedRemoteIceCandidate(iceCandidate);
         });
 
-        socket.on(socketMessages.answer, (description: RTCSessionDescriptionInit) => {
+        socket.on(socketMessages.answer, (description: RTCSessionDescriptionInit, roomName: string) => {
             logger.info(`received ${socketMessages.answer} as : ${description}`);
             this.webrtc.receivedRemoteAnswer(description);
         });
 
-        socket.on(socketMessages.hangUp, () => {
+        socket.on(socketMessages.hangUp, (roomName: string) => {
             logger.info('host received hang up.');
             this.webrtc.hangupAction();
         });
