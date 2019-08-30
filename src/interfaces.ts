@@ -40,8 +40,7 @@ export interface IEventData extends IMouseCoordinates {
 export enum ServerStatus {
     online,
     offline,
-    insession,
-    disabled
+    insession
 }
 
 export interface IBmrServer {

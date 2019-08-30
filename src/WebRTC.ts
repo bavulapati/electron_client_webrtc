@@ -1,12 +1,13 @@
+import { EventEmitter } from 'events';
 import { socketMessages } from './constants/socketMessages';
 import { handleRemoteEvents } from './handleRemoteEvents';
-import { IEventData, IIceCandidateMsg } from './interfaces';
+import { IEventData, IIceCandidateMsg, ServerStatus } from './interfaces';
 import { logger } from './logger';
 
 /**
  * Class that handles the Real-Time Communications using WebRTC
  */
-export class WebRTC {
+export class WebRTC extends EventEmitter {
     private static webrtcInstance: WebRTC;
     private sendChannel: RTCDataChannel | undefined;
     private localPeerConnection: RTCPeerConnection | undefined;
@@ -28,6 +29,7 @@ export class WebRTC {
     };
 
     private constructor() {
+        super();
         logger.info('creating webrtc instance');
     }
 
@@ -200,7 +202,7 @@ export class WebRTC {
             this.localPeerConnection = new RTCPeerConnection(servers);
             logger.info('Created local peer connection object localPeerConnection.');
 
-            this.creaeDataChannel();
+            this.createDataChannel();
 
             this.localPeerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
                 this.handleConnection(event, room, socket);
@@ -252,8 +254,10 @@ export class WebRTC {
         logger.info(`Send channel state is: ${readyState}`);
         if (readyState === 'open') {
             logger.info('Send channel is open');
+            this.emit(socketMessages.statusUpdate, ServerStatus.insession);
         }
         if (this.sendChannel !== undefined && readyState === 'closed') {
+            this.emit(socketMessages.statusUpdate, ServerStatus.online);
             logger.info('The Data Channel is Closed');
             // tslint:disable-next-line: no-null-keyword
             this.sendChannel.onmessage = null;
@@ -266,7 +270,7 @@ export class WebRTC {
         }
     }
 
-    private creaeDataChannel(): void {
+    private createDataChannel(): void {
         if (this.localPeerConnection !== undefined) {
             this.sendChannel = this.localPeerConnection.createDataChannel('sendDataChannel');
 

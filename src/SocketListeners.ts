@@ -1,5 +1,5 @@
 import { socketMessages } from './constants/socketMessages';
-import { IBmrServer, IIceCandidateMsg } from './interfaces';
+import { IBmrServer, IIceCandidateMsg, ServerStatus } from './interfaces';
 import { logger } from './logger';
 import { WebRTC } from './WebRTC';
 
@@ -91,6 +91,10 @@ export class SocketListeners {
         socket.on(socketMessages.serverList, (servers: IBmrServer[]) => {
             console.log('on serverlist');
             console.log(JSON.stringify(servers));
+        });
+
+        this.webrtc.on(socketMessages.statusUpdate, (status: ServerStatus) => {
+            socket.emit(socketMessages.statusUpdate, status);
         });
 
     }
