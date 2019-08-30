@@ -68,7 +68,7 @@ export class SocketListeners {
             // ipcRenderer.send('show-main-window');
         });
 
-        socket.on(socketMessages.startCall, () => {
+        socket.on(socketMessages.startCall, (roomName: string) => {
             logger.info('viewer wants to connect');
             this.webrtc.startAction(room, socket);
         });
@@ -83,7 +83,7 @@ export class SocketListeners {
             this.webrtc.receivedRemoteAnswer(description);
         });
 
-        socket.on(socketMessages.hangUp, () => {
+        socket.on(socketMessages.hangUp, (roomName: string) => {
             logger.info('host received hang up.');
             this.webrtc.hangupAction();
         });
