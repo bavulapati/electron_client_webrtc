@@ -23,7 +23,6 @@ const blockedKeyCode: string[] = [
     'f12',
     'control',
     'printscreen',
-    'backspace',
     'insert',
     'home',
     'delete',
