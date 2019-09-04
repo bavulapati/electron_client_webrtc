@@ -1,17 +1,15 @@
 import { socketMessages } from './constants/socketMessages';
 import { IBmrServer, IIceCandidateMsg, ServerStatus } from './interfaces';
 import { logger } from './logger';
-import { WebRTC } from './WebRTC';
+import { hangupAction, receivedRemoteAnswer, receivedRemoteIceCandidate, startAction } from './WebRTC';
 
 /**
  * Listeners for socket messages
  */
 export class SocketListeners {
     private static socketListenersInstance: SocketListeners;
-    private readonly webrtc: WebRTC;
 
     private constructor() {
-        this.webrtc = WebRTC.GET_INSTANCE();
     }
 
     public static GET_INSTANCE(): SocketListeners {
@@ -70,22 +68,22 @@ export class SocketListeners {
 
         socket.on(socketMessages.startCall, (roomName: string) => {
             logger.info('viewer wants to connect');
-            this.webrtc.startAction(room, socket);
+            startAction(room, socket);
         });
 
         socket.on(socketMessages.iceCandidate, (roomName: string, iceCandidate: IIceCandidateMsg) => {
             logger.info(`received ${socketMessages.iceCandidate} as : ${JSON.stringify(iceCandidate)}`);
-            this.webrtc.receivedRemoteIceCandidate(iceCandidate);
+            receivedRemoteIceCandidate(iceCandidate);
         });
 
         socket.on(socketMessages.answer, (description: RTCSessionDescriptionInit) => {
             logger.info(`received ${socketMessages.answer} as : ${description}`);
-            this.webrtc.receivedRemoteAnswer(description);
+            receivedRemoteAnswer(description);
         });
 
         socket.on(socketMessages.hangUp, (roomName: string) => {
             logger.info('host received hang up.');
-            this.webrtc.hangupAction();
+            hangupAction();
         });
 
         socket.on(socketMessages.serverList, (servers: IBmrServer[]) => {
@@ -93,9 +91,10 @@ export class SocketListeners {
             console.log(JSON.stringify(servers));
         });
 
-        this.webrtc.on(socketMessages.statusUpdate, (status: ServerStatus) => {
-            socket.emit(socketMessages.statusUpdate, status);
-        });
+        // this.webrtc.on(socketMessages.statusUpdate, (status: ServerStatus) => {
+        //     logger.info(`emiting status update - ${status}`);
+        //     socket.emit(socketMessages.statusUpdate, status);
+        // });
 
     }
 }

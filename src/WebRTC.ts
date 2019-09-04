@@ -1,297 +1,282 @@
-import { EventEmitter } from 'events';
 import { socketMessages } from './constants/socketMessages';
 import { handleRemoteEvents } from './handleRemoteEvents';
 import { IEventData, IIceCandidateMsg, ServerStatus } from './interfaces';
 import { logger } from './logger';
 
 /**
- * Class that handles the Real-Time Communications using WebRTC
+ * functions that handles the Real-Time Communications using WebRTC
  */
-export class WebRTC extends EventEmitter {
-    private static webrtcInstance: WebRTC;
-    private sendChannel: RTCDataChannel | undefined;
-    private localPeerConnection: RTCPeerConnection | undefined;
-    private localStream: MediaStream | undefined;
-    // tslint:disable-next-line: typedef
-    private readonly mediaStreamConstraints = {
-        audio: false,
-        video: {
-            mandatory: {
-                chromeMediaSource: 'screen',
-                minHeight: 405,
-                minWidth: 720
-            }
+let sendChannel: RTCDataChannel | undefined;
+let localPeerConnection: RTCPeerConnection | undefined;
+let localStream: MediaStream | undefined;
+// tslint:disable-next-line: typedef
+const mediaStreamConstraints = {
+    audio: false,
+    video: {
+        mandatory: {
+            chromeMediaSource: 'screen',
+            minHeight: 405,
+            minWidth: 720
         }
-    };
-    // Set up to exchange only video.
-    private readonly offerOptions: RTCOfferOptions = {
-        offerToReceiveVideo: true
-    };
-
-    private constructor() {
-        super();
-        logger.info('creating webrtc instance');
     }
+};
+// Set up to exchange only video.
+const offerOptions: RTCOfferOptions = {
+    offerToReceiveVideo: true
+};
 
-    public static GET_INSTANCE(): WebRTC {
-        if (this.webrtcInstance === undefined) {
-            this.webrtcInstance = new WebRTC();
-        }
+// Handles start button action: creates local MediaStream.
+export function startAction(room: string, socket: SocketIOClient.Socket): void {
+    // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
+    (<any>navigator.mediaDevices).getUserMedia(mediaStreamConstraints)
+        .then((mediaStream: MediaStream) => { gotLocalMediaStream(mediaStream, room, socket); })
+        .catch(handleLocalMediaStreamError);
+    logger.info('Requesting local stream.');
+}
 
-        return this.webrtcInstance;
-    }
+export function receivedRemoteIceCandidate(rTCIceCandidateInit: IIceCandidateMsg): void {
 
-    // Handles start button action: creates local MediaStream.
-    public startAction(room: string, socket: SocketIOClient.Socket): void {
-        // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
-        (<any>navigator.mediaDevices).getUserMedia(this.mediaStreamConstraints)
-            .then((mediaStream: MediaStream) => { this.gotLocalMediaStream(mediaStream, room, socket); })
-            .catch(this.handleLocalMediaStreamError);
-        logger.info('Requesting local stream.');
-    }
+    if (rTCIceCandidateInit.candidate.trim().length !== 0) {
+        const newIceCandidate: RTCIceCandidate = new RTCIceCandidate({
+            candidate: rTCIceCandidateInit.candidate,
+            sdpMLineIndex: rTCIceCandidateInit.label,
+            sdpMid: rTCIceCandidateInit.id
+        });
 
-    public receivedRemoteIceCandidate(rTCIceCandidateInit: IIceCandidateMsg): void {
-
-        if (rTCIceCandidateInit.candidate.trim().length !== 0) {
-            const newIceCandidate: RTCIceCandidate = new RTCIceCandidate({
-                candidate: rTCIceCandidateInit.candidate,
-                sdpMLineIndex: rTCIceCandidateInit.label,
-                sdpMid: rTCIceCandidateInit.id
-            });
-
-            if (this.localPeerConnection !== undefined) {
-                this.localPeerConnection.addIceCandidate(newIceCandidate)
-                    .then(() => {
-                        this.handleConnectionSuccess();
-                    })
-                    .catch((error: Error) => {
-                        this.handleConnectionFailure(error);
-                    });
-            }
-        }
-        logger.info(`ICE candidate:\n${rTCIceCandidateInit.candidate}.`);
-    }
-
-    // Logs answer to offer creation and sets peer connection session descriptions.
-    public receivedRemoteAnswer(description: RTCSessionDescriptionInit): void {
-        logger.info(`Answer from remotePeerConnection:\n${description.sdp}.`);
-
-        logger.info('localPeerConnection setRemoteDescription start.');
-        if (this.localPeerConnection !== undefined) {
-            this.localPeerConnection.setRemoteDescription(new RTCSessionDescription(description))
+        if (localPeerConnection !== undefined) {
+            localPeerConnection.addIceCandidate(newIceCandidate)
                 .then(() => {
-                    if (this.localPeerConnection !== undefined) { this.setRemoteDescriptionSuccess(this.localPeerConnection); }
+                    handleConnectionSuccess();
                 })
-                .catch(this.setSessionDescriptionError);
-        }
-    }
-
-    // Handles hangup action: ends up call, closes connections and resets peers.
-    public hangupAction(): void {
-        if (this.sendChannel !== undefined) {
-            this.sendChannel.close();
-            logger.info(`Closed data channel with label: ${this.sendChannel.label}`);
-        }
-        if (this.localPeerConnection !== undefined) {
-            this.localPeerConnection.close();
-            this.localPeerConnection = undefined;
-        }
-        logger.info('Ending call.');
-        // socket.close();
-    }
-
-    // Sets the MediaStream as the video element src.
-    private gotLocalMediaStream(mediaStream: MediaStream, room: string, socket: SocketIOClient.Socket): void {
-        this.localStream = mediaStream;
-        logger.info('Received local stream.');
-        this.answerCall(room, socket);
-    }
-
-    // Logs that the connection failed.
-    private handleConnectionFailure(error: Error): void {
-        logger.info(`failed to add ICE Candidate:\n${error.toString()}.`);
-    }
-
-    // Logs that the connection succeeded.
-    private handleConnectionSuccess(): void {
-        logger.info(`host addIceCandidate success.`);
-    }
-
-    // Define MediaStreams callbacks.
-
-    // Handles error by logging a message to the console.
-    private handleLocalMediaStreamError(error: Event): void {
-        logger.info(`navigator.getUserMedia error: ${error.toString()}.`);
-    }
-
-    // Gets the name of a certain peer connection.
-    private getPeerName(peerConnection: RTCPeerConnection): string {
-        return (peerConnection === this.localPeerConnection) ?
-            'localPeerConnection' : 'remotePeerConnection';
-    }
-
-    // Logs changes to the connection state.
-    private handleConnectionChange(event: Event): void {
-        const peerConnection: RTCPeerConnection | null = <RTCPeerConnection>event.target;
-        logger.info('ICE state change event: ', event);
-        logger.info(`${this.getPeerName(peerConnection)} ICE state: ` +
-            `${peerConnection.iceConnectionState}.`);
-    }
-
-    // Logs success when setting session description.
-    private setDescriptionSuccess(peerConnection: RTCPeerConnection, functionName: string): void {
-        const peerName: string = this.getPeerName(peerConnection);
-        logger.info(`${peerName} ${functionName} complete.`);
-    }
-
-    // Logs success when localDescription is set.
-    private setLocalDescriptionSuccess(peerConnection: RTCPeerConnection): void {
-        this.setDescriptionSuccess(peerConnection, 'setLocalDescription');
-    }
-
-    // Logs error when setting session description fails.
-    private setSessionDescriptionError(error: Error): void {
-        logger.info(`Failed to create session description: ${error.toString()}.`);
-    }
-
-    // Logs offer creation and sets peer connection session descriptions.
-    private createdOffer(description: RTCSessionDescriptionInit, room: string, socket: SocketIOClient.Socket): void {
-        logger.info(`Offer from localPeerConnection:\n${description.sdp}`);
-
-        logger.info('localPeerConnection setLocalDescription start.');
-        if (this.localPeerConnection !== undefined) {
-            this.localPeerConnection.setLocalDescription(description)
-                .then(() => {
-                    if (this.localPeerConnection !== undefined) { this.setLocalDescriptionSuccess(this.localPeerConnection); }
-                })
-                .catch(this.setSessionDescriptionError);
-        }
-
-        socket.emit(socketMessages.offer, description, room);
-
-    }
-
-    // Handles call button action: creates peer connection.
-    private answerCall(room: string, socket: SocketIOClient.Socket): void {
-
-        logger.info('Answering call.');
-
-        if (this.localStream !== undefined) {
-
-            // Get local media stream tracks.
-            const videoTracks: MediaStreamTrack[] = this.localStream.getVideoTracks();
-            const audioTracks: MediaStreamTrack[] = this.localStream.getAudioTracks();
-            if (videoTracks.length > 0) {
-                logger.info(`Using video device: ${videoTracks[0].label}.`);
-            }
-            if (audioTracks.length > 0) {
-                logger.info(`Using audio device: ${audioTracks[0].label}.`);
-            }
-
-            // Allows for RTC server configuration.
-            const servers: RTCConfiguration = {
-                iceServers: [{
-                    // urls: ['stun:stun.l.google.com:19302']
-                    urls: ['turn:ec2-54-169-187-87.ap-southeast-1.compute.amazonaws.com:3478'],
-                    username: 'bmr-turn-user',
-                    credential: 'insecure-key'
-                }]
-            };
-
-            // Create peer connections and add behavior.
-            this.localPeerConnection = new RTCPeerConnection(servers);
-            logger.info('Created local peer connection object localPeerConnection.');
-
-            this.createDataChannel();
-
-            this.localPeerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
-                this.handleConnection(event, room, socket);
-            });
-            this.localPeerConnection.addEventListener('iceconnectionstatechange', (event: Event) => {
-                this.handleConnectionChange(event);
-            });
-
-            // Add local stream to connection and create offer to connect.
-
-            this.localStream.getTracks()
-                .forEach((track: MediaStreamTrack) => {
-                    if (this.localPeerConnection !== undefined && this.localStream !== undefined) {
-                        this.localPeerConnection.addTrack(track, this.localStream);
-                    }
+                .catch((error: Error) => {
+                    handleConnectionFailure(error);
                 });
-
-            logger.info('Added local stream to localPeerConnection.');
-
-            logger.info('localPeerConnection createOffer start.');
-            this.localPeerConnection.createOffer(this.offerOptions)
-                .then((description: RTCSessionDescriptionInit) => { this.createdOffer(description, room, socket); })
-                .catch(this.setSessionDescriptionError);
         }
     }
+    logger.info(`ICE candidate:\n${rTCIceCandidateInit.candidate}.`);
+}
 
-    // Define RTC peer connection behavior.
+// Logs answer to offer creation and sets peer connection session descriptions.
+export function receivedRemoteAnswer(description: RTCSessionDescriptionInit): void {
+    logger.info(`Answer from remotePeerConnection:\n${description.sdp}.`);
 
-    // Connects with new peer candidate.
-    private handleConnection(event: RTCPeerConnectionIceEvent, room: string, socket: SocketIOClient.Socket): void {
-        const peerConnection: RTCPeerConnection | null = <RTCPeerConnection>event.target;
-        const iceCandidate: RTCIceCandidate | null = event.candidate;
+    logger.info('localPeerConnection setRemoteDescription start.');
+    if (localPeerConnection !== undefined) {
+        localPeerConnection.setRemoteDescription(new RTCSessionDescription(description))
+            .then(() => {
+                if (localPeerConnection !== undefined) { setRemoteDescriptionSuccess(localPeerConnection); }
+            })
+            .catch(setSessionDescriptionError);
+    }
+}
 
-        if (iceCandidate !== null && iceCandidate.sdpMid !== null && iceCandidate.sdpMLineIndex !== null) {
-            const candidateMsg: IIceCandidateMsg = {
-                candidate: iceCandidate.candidate,
-                id: iceCandidate.sdpMid,
-                label: iceCandidate.sdpMLineIndex
-            };
+// Handles hangup action: ends up call, closes connections and resets peers.
+export function hangupAction(): void {
+    if (sendChannel !== undefined) {
+        sendChannel.close();
+        logger.info(`Closed data channel with label: ${sendChannel.label}`);
+    }
+    if (localPeerConnection !== undefined) {
+        localPeerConnection.close();
+        localPeerConnection = undefined;
+    }
+    logger.info('Ending call.');
+    // socket.close();
+}
 
-            socket.emit(socketMessages.iceCandidate, candidateMsg, room);
+// Sets the MediaStream as the video element src.
+function gotLocalMediaStream(mediaStream: MediaStream, room: string, socket: SocketIOClient.Socket): void {
+    localStream = mediaStream;
+    logger.info('Received local stream.');
+    answerCall(room, socket);
+}
 
-            logger.info(`${this.getPeerName(peerConnection)} ICE candidate:\n${iceCandidate.candidate}.`);
-        }
+// Logs that the connection failed.
+function handleConnectionFailure(error: Error): void {
+    logger.info(`failed to add ICE Candidate:\n${error.toString()}.`);
+}
+
+// Logs that the connection succeeded.
+function handleConnectionSuccess(): void {
+    logger.info(`host addIceCandidate success.`);
+}
+
+// Define MediaStreams callbacks.
+
+// Handles error by logging a message to the console.
+function handleLocalMediaStreamError(error: Event): void {
+    logger.info(`navigator.getUserMedia error: ${error.toString()}.`);
+}
+
+// Gets the name of a certain peer connection.
+function getPeerName(peerConnection: RTCPeerConnection): string {
+    return (peerConnection === localPeerConnection) ?
+        'localPeerConnection' : 'remotePeerConnection';
+}
+
+// Logs changes to the connection state.
+function handleConnectionChange(event: Event): void {
+    const peerConnection: RTCPeerConnection | null = <RTCPeerConnection>event.target;
+    logger.info('ICE state change event: ', event);
+    logger.info(`${getPeerName(peerConnection)} ICE state: ` +
+        `${peerConnection.iceConnectionState}.`);
+    if (peerConnection.iceConnectionState === 'disconnected') {
+        hangupAction();
+    }
+}
+
+// Logs success when setting session description.
+function setDescriptionSuccess(peerConnection: RTCPeerConnection, functionName: string): void {
+    const peerName: string = getPeerName(peerConnection);
+    logger.info(`${peerName} ${functionName} complete.`);
+}
+
+// Logs success when localDescription is set.
+function setLocalDescriptionSuccess(peerConnection: RTCPeerConnection): void {
+    setDescriptionSuccess(peerConnection, 'setLocalDescription');
+}
+
+// Logs error when setting session description fails.
+function setSessionDescriptionError(error: Error): void {
+    logger.info(`Failed to create session description: ${error.toString()}.`);
+}
+
+// Logs offer creation and sets peer connection session descriptions.
+function createdOffer(description: RTCSessionDescriptionInit, room: string, socket: SocketIOClient.Socket): void {
+    logger.info(`Offer from localPeerConnection:\n${description.sdp}`);
+
+    logger.info('localPeerConnection setLocalDescription start.');
+    if (localPeerConnection !== undefined) {
+        localPeerConnection.setLocalDescription(description)
+            .then(() => {
+                if (localPeerConnection !== undefined) { setLocalDescriptionSuccess(localPeerConnection); }
+            })
+            .catch(setSessionDescriptionError);
     }
 
-    private onSendChannelStateChange(): void {
-        const readyState: RTCDataChannelState = this.sendChannel === undefined ? 'closed' : this.sendChannel.readyState;
-        logger.info(`Send channel state is: ${readyState}`);
-        if (readyState === 'open') {
-            logger.info('Send channel is open');
-            this.emit(socketMessages.statusUpdate, ServerStatus.insession);
+    socket.emit(socketMessages.offer, description, room);
+
+}
+
+// Handles call button action: creates peer connection.
+function answerCall(room: string, socket: SocketIOClient.Socket): void {
+
+    logger.info('Answering call.');
+
+    if (localStream !== undefined) {
+
+        // Get local media stream tracks.
+        const videoTracks: MediaStreamTrack[] = localStream.getVideoTracks();
+        const audioTracks: MediaStreamTrack[] = localStream.getAudioTracks();
+        if (videoTracks.length > 0) {
+            logger.info(`Using video device: ${videoTracks[0].label}.`);
         }
-        if (this.sendChannel !== undefined && readyState === 'closed') {
-            this.emit(socketMessages.statusUpdate, ServerStatus.online);
-            logger.info('The Data Channel is Closed');
-            // tslint:disable-next-line: no-null-keyword
-            this.sendChannel.onmessage = null;
-            // tslint:disable-next-line: no-null-keyword
-            this.sendChannel.onopen = null;
-            // tslint:disable-next-line: no-null-keyword
-            this.sendChannel.onerror = null;
-            // tslint:disable-next-line: no-null-keyword
-            this.sendChannel.onclose = null;
+        if (audioTracks.length > 0) {
+            logger.info(`Using audio device: ${audioTracks[0].label}.`);
         }
+
+        // Allows for RTC server configuration.
+        const servers: RTCConfiguration = {
+            iceServers: [{
+                // urls: ['stun:stun.l.google.com:19302']
+                urls: ['turn:ec2-54-169-187-87.ap-southeast-1.compute.amazonaws.com:3478'],
+                username: 'bmr-turn-user',
+                credential: 'insecure-key'
+            }]
+        };
+
+        // Create peer connections and add behavior.
+        localPeerConnection = new RTCPeerConnection(servers);
+        logger.info('Created local peer connection object localPeerConnection.');
+
+        createDataChannel(socket);
+
+        localPeerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => {
+            handleConnection(event, room, socket);
+        });
+        localPeerConnection.addEventListener('iceconnectionstatechange', (event: Event) => {
+            handleConnectionChange(event);
+        });
+
+        // Add local stream to connection and create offer to connect.
+
+        localStream.getTracks()
+            .forEach((track: MediaStreamTrack) => {
+                if (localPeerConnection !== undefined && localStream !== undefined) {
+                    localPeerConnection.addTrack(track, localStream);
+                }
+            });
+
+        logger.info('Added local stream to localPeerConnection.');
+
+        logger.info('localPeerConnection createOffer start.');
+        localPeerConnection.createOffer(offerOptions)
+            .then((description: RTCSessionDescriptionInit) => { createdOffer(description, room, socket); })
+            .catch(setSessionDescriptionError);
     }
+}
 
-    private createDataChannel(): void {
-        if (this.localPeerConnection !== undefined) {
-            this.sendChannel = this.localPeerConnection.createDataChannel('sendDataChannel');
+// Define RTC peer connection behavior.
 
-            this.sendChannel.onerror = (error: RTCErrorEvent): void => {
-                logger.error('Data Channel Error:', error);
-            };
+// Connects with new peer candidate.
+function handleConnection(event: RTCPeerConnectionIceEvent, room: string, socket: SocketIOClient.Socket): void {
+    const peerConnection: RTCPeerConnection | null = <RTCPeerConnection>event.target;
+    const iceCandidate: RTCIceCandidate | null = event.candidate;
 
-            this.sendChannel.onmessage = (event: MessageEvent): void => {
-                handleRemoteEvents(<IEventData>JSON.parse(<string>event.data));
-            };
+    if (iceCandidate !== null && iceCandidate.sdpMid !== null && iceCandidate.sdpMLineIndex !== null) {
+        const candidateMsg: IIceCandidateMsg = {
+            candidate: iceCandidate.candidate,
+            id: iceCandidate.sdpMid,
+            label: iceCandidate.sdpMLineIndex
+        };
 
-            logger.info('Created send data channel');
+        socket.emit(socketMessages.iceCandidate, candidateMsg, room);
 
-            this.sendChannel.onopen = this.onSendChannelStateChange;
-            this.sendChannel.onclose = this.onSendChannelStateChange;
-        }
+        logger.info(`${getPeerName(peerConnection)} ICE candidate:\n${iceCandidate.candidate}.`);
     }
+}
 
-    // Logs success when remoteDescription is set.
-    private setRemoteDescriptionSuccess(peerConnection: RTCPeerConnection): void {
-        this.setDescriptionSuccess(peerConnection, 'setRemoteDescription');
+function onSendChannelStateChange(socket: SocketIOClient.Socket): void {
+    const readyState: RTCDataChannelState = sendChannel === undefined ? 'closed' : sendChannel.readyState;
+    logger.info(`Send channel state is: ${readyState}`);
+    if (readyState === 'open') {
+        logger.info('Send channel is open');
+        socket.emit(socketMessages.statusUpdate, ServerStatus.insession);
     }
+    if (sendChannel !== undefined && readyState === 'closed') {
+        socket.emit(socketMessages.statusUpdate, ServerStatus.online);
+        logger.info('The Data Channel is Closed');
+        // tslint:disable-next-line: no-null-keyword
+        sendChannel.onmessage = null;
+        // tslint:disable-next-line: no-null-keyword
+        sendChannel.onopen = null;
+        // tslint:disable-next-line: no-null-keyword
+        sendChannel.onerror = null;
+        // tslint:disable-next-line: no-null-keyword
+        sendChannel.onclose = null;
+    }
+}
 
+function createDataChannel(socket: SocketIOClient.Socket): void {
+    if (localPeerConnection !== undefined) {
+        sendChannel = localPeerConnection.createDataChannel('sendDataChannel');
+
+        sendChannel.onerror = (error: RTCErrorEvent): void => {
+            logger.error('Data Channel Error:', error);
+        };
+
+        sendChannel.onmessage = (event: MessageEvent): void => {
+            handleRemoteEvents(<IEventData>JSON.parse(<string>event.data));
+        };
+
+        logger.info('Created send data channel');
+
+        sendChannel.onclose = sendChannel.onopen = (): void => { onSendChannelStateChange(socket); };
+        // sendChannel.onclose = onSendChannelStateChange;
+    }
+}
+
+// Logs success when remoteDescription is set.
+function setRemoteDescriptionSuccess(peerConnection: RTCPeerConnection): void {
+    setDescriptionSuccess(peerConnection, 'setRemoteDescription');
 }
