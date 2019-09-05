@@ -71,6 +71,9 @@ export function handleRemoteEvents(eventData: IEventData): void {
                 logger.info('Got a message which is not allowed');
             }
             break;
+        case 'wheel':
+            robot.scrollMouse(eventData.x, eventData.y);
+            break;
         default:
             logger.info('unhandled eventdata ', event);
     }
