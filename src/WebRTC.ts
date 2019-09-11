@@ -179,7 +179,7 @@ function answerCall(room: string, socket: SocketIOClient.Socket): void {
         const servers: RTCConfiguration = {
             iceServers: [{
                 // urls: ['stun:stun.l.google.com:19302']
-                urls: ['turn:ec2-54-169-187-87.ap-southeast-1.compute.amazonaws.com:3478'],
+                urls: ['turn:bmrturn.idrivelite.com:3478'],
                 username: 'bmr-turn-user',
                 credential: 'insecure-key'
             }]
