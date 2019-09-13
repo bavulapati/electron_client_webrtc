@@ -58,10 +58,9 @@ export function receivedRemoteIceCandidate(rTCIceCandidateInit: IIceCandidateMsg
 
 // Logs answer to offer creation and sets peer connection session descriptions.
 export function receivedRemoteAnswer(description: RTCSessionDescriptionInit): void {
-    logger.info(`Answer from remotePeerConnection:\n${description.sdp}.`);
-
-    logger.info('localPeerConnection setRemoteDescription start.');
-    if (localPeerConnection !== undefined) {
+    if (description !== null && localPeerConnection !== undefined) {
+        logger.info(`Answer from remotePeerConnection:\n${description.sdp}.`);
+        logger.info('localPeerConnection setRemoteDescription start.');
         localPeerConnection.setRemoteDescription(new RTCSessionDescription(description))
             .then(() => {
                 if (localPeerConnection !== undefined) { setRemoteDescriptionSuccess(localPeerConnection); }
