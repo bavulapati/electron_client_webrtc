@@ -1,3 +1,4 @@
+import { changeResolution, changeResolutionForSessionIfRequired } from './changeResolutionForSessionIfRequired';
 import { socketMessages } from './constants/socketMessages';
 import { handleRemoteEvents } from './handleRemoteEvents';
 import { IEventData, IIceCandidateMsg, ServerStatus } from './interfaces';
@@ -27,6 +28,7 @@ const offerOptions: RTCOfferOptions = {
 
 // Handles start button action: creates local MediaStream.
 export function startAction(room: string, socket: SocketIOClient.Socket): void {
+    changeResolutionForSessionIfRequired();
     // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
     (<any>navigator.mediaDevices).getUserMedia(mediaStreamConstraints)
         .then((mediaStream: MediaStream) => { gotLocalMediaStream(mediaStream, room, socket); })
@@ -80,6 +82,7 @@ export function hangupAction(): void {
         localPeerConnection = undefined;
     }
     logger.info('Ending call.');
+    changeResolution();
     // socket.close();
 }
 
