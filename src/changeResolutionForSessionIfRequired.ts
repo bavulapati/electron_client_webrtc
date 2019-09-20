@@ -1,42 +1,40 @@
-import { ChildProcess, spawn } from 'child_process';
-import { Rectangle, screen as electronScreen } from 'electron';
+import { displayUtility, IResolution } from '@idrive-remotepc/display-utility';
 import { logger } from './logger';
 
+let previousResolution: IResolution | undefined;
+let resolutionChangedForSession: boolean = false;
+let rROutput: number;
+
 export function changeResolutionForSessionIfRequired(): boolean {
-    const screenBounds: Rectangle = electronScreen.getPrimaryDisplay().bounds;
-    logger.info(`PrimaryDisplay resolution : ${screenBounds.width} x ${screenBounds.height}`);
-    const prefferedWidth: number = 1920;
-    const prefferedHeight: number = 1080;
-    if (screenBounds.width >= prefferedWidth) {
-        logger.info('the screen already have required resolution. Not changing resolution');
+    rROutput = displayUtility.getPrimaryRROutput();
+    if (rROutput === 0) {
+        resolutionChangedForSession = false;
 
-        return false;
-    } else {
-        changeResolution(`${prefferedWidth}x${prefferedHeight}`);
-
-        return true;
+        return resolutionChangedForSession;
     }
+    previousResolution = displayUtility.getCurrentResolution(rROutput);
+    const prefferedResolution: IResolution = { width: 1920, height: 1080 };
+    if (previousResolution !== undefined) {
+        logger.info(`PrimaryDisplay resolution : ${previousResolution.width} x ${previousResolution.height}`);
+        if (previousResolution.width >= prefferedResolution.width) {
+            logger.info('the screen already have required resolution. Not changing resolution');
+            resolutionChangedForSession = false;
+
+            return resolutionChangedForSession;
+        } else {
+            displayUtility.setResolution(rROutput, prefferedResolution);
+            resolutionChangedForSession = true;
+
+            return resolutionChangedForSession;
+        }
+    }
+
+    return resolutionChangedForSession;
 }
 
-export function changeResolution(resolution?: string): void {
-    const args: string[] = ['--output', 'DP-1'];
-    if (resolution === undefined) {
-        args.push('auto');
-        logger.info('switching resolution back');
-    } else {
-        args.push('--mode', resolution);
-        logger.info(`switching resolution to ${resolution}`);
+export function revertResolutionChange(): void {
+    if (resolutionChangedForSession && rROutput !== 0 && previousResolution !== undefined) {
+        displayUtility.setResolution(rROutput, previousResolution);
+        resolutionChangedForSession = false;
     }
-    const cProcess: ChildProcess = spawn('xrandr', args);
-    cProcess.stdout.on('data', (data: unknown) => {
-        logger.info(`xrandr stdout: ${data}`);
-    });
-
-    cProcess.stderr.on('data', (data: unknown) => {
-        logger.error(`xrandr stderr: ${data}`);
-    });
-
-    cProcess.on('close', (code: unknown) => {
-        logger.info(`child process exited with code ${code} `);
-    });
 }

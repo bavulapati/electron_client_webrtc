@@ -1,4 +1,4 @@
-import { changeResolution, changeResolutionForSessionIfRequired } from './changeResolutionForSessionIfRequired';
+import { changeResolutionForSessionIfRequired, revertResolutionChange } from './changeResolutionForSessionIfRequired';
 import { socketMessages } from './constants/socketMessages';
 import { handleRemoteEvents } from './handleRemoteEvents';
 import { IEventData, IIceCandidateMsg, ServerStatus } from './interfaces';
@@ -28,12 +28,22 @@ const offerOptions: RTCOfferOptions = {
 
 // Handles start button action: creates local MediaStream.
 export function startAction(room: string, socket: SocketIOClient.Socket): void {
-    changeResolutionForSessionIfRequired();
-    // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
-    (<any>navigator.mediaDevices).getUserMedia(mediaStreamConstraints)
-        .then((mediaStream: MediaStream) => { gotLocalMediaStream(mediaStream, room, socket); })
-        .catch(handleLocalMediaStreamError);
-    logger.info('Requesting local stream.');
+
+    if (changeResolutionForSessionIfRequired()) {
+        setTimeout(() => {
+            // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
+            (<any>navigator.mediaDevices).getUserMedia(mediaStreamConstraints)
+                .then((mediaStream: MediaStream) => { gotLocalMediaStream(mediaStream, room, socket); })
+                .catch(handleLocalMediaStreamError);
+            logger.info('Requesting local stream.');
+        },         5000);
+    } else {
+        // tslint:disable-next-line: no-any // tslint:disable-next-line: no-unsafe-any
+        (<any>navigator.mediaDevices).getUserMedia(mediaStreamConstraints)
+            .then((mediaStream: MediaStream) => { gotLocalMediaStream(mediaStream, room, socket); })
+            .catch(handleLocalMediaStreamError);
+        logger.info('Requesting local stream.');
+    }
 }
 
 export function receivedRemoteIceCandidate(rTCIceCandidateInit: IIceCandidateMsg): void {
@@ -82,7 +92,6 @@ export function hangupAction(): void {
         localPeerConnection = undefined;
     }
     logger.info('Ending call.');
-    changeResolution();
     // socket.close();
 }
 
@@ -248,6 +257,7 @@ function onSendChannelStateChange(socket: SocketIOClient.Socket): void {
     if (sendChannel !== undefined && readyState === 'closed') {
         socket.emit(socketMessages.statusUpdate, ServerStatus.online);
         logger.info('The Data Channel is Closed');
+        revertResolutionChange();
         // tslint:disable-next-line: no-null-keyword
         sendChannel.onmessage = null;
         // tslint:disable-next-line: no-null-keyword

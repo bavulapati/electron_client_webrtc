@@ -43,16 +43,17 @@
   "author": "Balakrishna Avulapati <bavulapati@gmail.com> (https://github.com/bavulapati)",
   "license": "MIT",
   "devDependencies": {
-    "@types/debug": "^4.1.4",
+    "@types/debug": "^4.1.5",
     "@types/socket.io-client": "^1.4.32",
-    "electron": "^4.2.8",
+    "electron": "^4.2.10",
     "electron-builder": "^20.44.4",
-    "tslint": "^5.18.0",
+    "tslint": "^5.20.0",
     "tslint-microsoft-contrib": "^6.2.0",
-    "typescript": "^3.5.3"
+    "typescript": "^3.6.3"
   },
   "dependencies": {
-    "electron-log": "^3.0.6",
+    "@idrive-remotepc/display-utility": "git+https://github.com/idrive-remotepc/display-utility.git#bmr-display-utility",
+    "electron-log": "^3.0.8",
     "robotjs": "^0.5.1",
     "socket.io-client": "^2.2.0"
   }

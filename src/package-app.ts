@@ -5,6 +5,12 @@ const config: Configuration = {
     linux: {
         category: 'Network'
     },
+    deb: {
+        depends: [
+            'libxrandr-dev', // required for displayutility
+            'libxtst-dev' // required for displayutility
+        ]
+    },
     files: [
         '**/*',
         // tslint:disable-next-line: no-invalid-template-strings

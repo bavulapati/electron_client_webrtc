@@ -4,6 +4,7 @@ import { app, BrowserWindow, ipcMain } from 'electron';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { revertResolutionChange } from './changeResolutionForSessionIfRequired';
 import { logger } from './logger';
 
 const pidPath: string = path.join(os.homedir(), 'remotepc.pid');
@@ -19,6 +20,7 @@ fs.writeFile(pidPath, process.pid, (err: NodeJS.ErrnoException | null): void => 
 
 process.on('SIGTERM', () => {
   logger.info('SIGTERM signal received.');
+  revertResolutionChange();
   fs.truncateSync(pidPath);
   process.exit(0);
 });
