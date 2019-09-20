@@ -27,7 +27,7 @@ export class SocketListeners {
 
         logger.info('adding all socket listeners');
         // const connectionQuery: IConnectionQuery = <IConnectionQuery>(socket.io.opts.query);
-        socket.emit(socketMessages.register, room);
+        // socket.emit(socketMessages.register, room);
         // room = bmrUtilityResponse.bmr_serial_key;
 
         socket.on('connect', () => {
