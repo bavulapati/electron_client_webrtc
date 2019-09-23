@@ -63,7 +63,7 @@ function createHostWindow(): void {
     minHeight: 580,
     minWidth: 820,
     resizable: true,
-    show: true,
+    show: false,
     // useContentSize: true,
     width: 820
   });
@@ -72,7 +72,7 @@ function createHostWindow(): void {
   hostWindow.loadFile(path.join(__dirname, '../html/index.html'));
 
   // Open the DevTools.
-  hostWindow.webContents.openDevTools();
+  // hostWindow.webContents.openDevTools();
 
   // hostWindow.on('close', (event: Electron.Event) => {
   //   event.preventDefault();

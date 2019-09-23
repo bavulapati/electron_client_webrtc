@@ -1,4 +1,5 @@
 import { displayUtility, IResolution } from '@idrive-remotepc/display-utility';
+import { ChildProcess, spawn } from 'child_process';
 import { logger } from './logger';
 
 let previousResolution: IResolution | undefined;
@@ -19,13 +20,11 @@ export function changeResolutionForSessionIfRequired(): boolean {
         if (previousResolution.width >= prefferedResolution.width) {
             logger.info('the screen already have required resolution. Not changing resolution');
             resolutionChangedForSession = false;
-
-            return resolutionChangedForSession;
         } else {
-            displayUtility.setResolution(rROutput, prefferedResolution);
+            logger.info('switching the screen resolution to required resolution.');
+            const prefferedResolutionMode: string = '1920x1080_60.00';
+            setResolution(displayUtility.getOutputName(rROutput), prefferedResolutionMode);
             resolutionChangedForSession = true;
-
-            return resolutionChangedForSession;
         }
     }
 
@@ -37,4 +36,21 @@ export function revertResolutionChange(): void {
         displayUtility.setResolution(rROutput, previousResolution);
         resolutionChangedForSession = false;
     }
+}
+
+function setResolution(outputName: string, modeName: string): void {
+    const childP: ChildProcess = spawn('xrandr', ['--output', outputName, '--mode', modeName]);
+
+    childP.stdout.on('data', (data: unknown) => {
+        console.log(`stdout: ${data}`);
+    });
+
+    childP.stderr.on('data', (data: unknown) => {
+        console.error(`stderr: ${data}`);
+    });
+
+    childP.on('close', (code: unknown) => {
+        console.log(`child process exited with code ${code}`);
+    });
+
 }
