@@ -45,7 +45,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.5",
     "@types/socket.io-client": "^1.4.33",
-    "electron": "^4.2.12",
+    "electron": "^10.1.2",
     "electron-builder": "^20.44.4",
     "tslint": "^5.20.1",
     "tslint-microsoft-contrib": "^6.2.0",
