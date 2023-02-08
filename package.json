@@ -54,6 +54,6 @@
   "dependencies": {
     "electron-log": "^3.0.9",
     "robotjs": "^0.6.0",
-    "socket.io-client": "^2.3.0"
+    "socket.io-client": "^2.5.0"
   }
 }
