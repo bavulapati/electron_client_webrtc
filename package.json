@@ -46,7 +46,7 @@
     "@types/debug": "^4.1.5",
     "@types/socket.io-client": "^1.4.33",
     "electron": "^23.0.0",
-    "electron-builder": "^23.6.0",
+    "electron-builder": "^25.1.8",
     "tslint": "^5.20.1",
     "tslint-microsoft-contrib": "^6.2.0",
     "typescript": "^3.9.7"
